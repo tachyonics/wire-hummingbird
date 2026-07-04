@@ -2,51 +2,88 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
-
-# Linux-only (Docker containers), matching task-cluster. macOS is intentionally
-# not built: a transitive dependency (swift-configuration, via swift-wire) doesn't
-# compile against Darwin Foundation, and Linux is the deployment target.
+    branches: [ main ]
 
 jobs:
-  BuildAndEndToEnd:
-    runs-on: ubuntu-latest
-    container:
-      image: swift:6.3.3
+  BuildLinux:
+    name: Linux / Swift ${{ matrix.swift-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        swift-version: ["6.3.3"]
+    runs-on: ubuntu-24.04
     steps:
+      - uses: actions/checkout@v6
+      - uses: SwiftyLab/setup-swift@v1
+        with:
+          swift-version: ${{ matrix.swift-version }}
       - name: Install dependencies
-        run: apt-get update && apt-get install -y curl unzip libssl-dev
-      - uses: actions/checkout@v7
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev curl unzip
       - name: Build
         run: swift build -c release -Xswiftc -strict-concurrency=complete
-      - name: Run end-to-end example
-        # Bootstraps the graph via the build plugin, applies the collated routes to a
-        # Router, and serves a request in-process via HummingbirdTesting's
-        # app.test(.router). Prints "wire-hummingbird OK" or traps (precondition).
-        run: swift run WireHummingbirdExample
-      - name: Build (verbose, for SwiftLint analyze)
+      - name: Build (verbose, for SwiftLint)
+        # -v captures compiler invocations for SwiftLint's unused_import analyzer;
+        # redirected to file to keep the CI log readable.
         run: swift build -v > build.log 2>&1
       - name: Install SwiftLint
         run: |
           curl -sL https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_amd64.zip -o swiftlint.zip
           unzip -o swiftlint.zip -d /usr/local/bin
           chmod +x /usr/local/bin/swiftlint
-      - name: SwiftLint analyze (unused imports)
+      - name: SwiftLint unused imports
         run: swiftlint analyze --strict --quiet --compiler-log-path build.log
-      - name: SwiftLint
-        run: swiftlint lint --quiet
+
+  EndToEnd:
+    name: End-to-end example / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: SwiftyLab/setup-swift@v1
+        with:
+          swift-version: "6.3.3"
+      - name: Install dependencies (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+      - name: Run end-to-end example
+        # Bootstraps the graph via the build plugin, applies the collated routes
+        # to a Router, and serves a request in-process via HummingbirdTesting's
+        # app.test(.router). Prints "wire-hummingbird OK" or traps (precondition).
+        run: swift run WireHummingbirdExample
 
   SwiftFormat:
-    runs-on: ubuntu-latest
-    container:
-      image: swift:6.3.3
+    name: swift-format / Swift ${{ matrix.swift-version }}
+    strategy:
+      matrix:
+        swift-version: ["6.3.3"]
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v6
+      - uses: SwiftyLab/setup-swift@v1
+        with:
+          swift-version: ${{ matrix.swift-version }}
       - name: Run swift-format
         run: swift-format format --recursive --in-place .
       - name: Check for formatting differences
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --exit-code
+
+  SwiftLint:
+    name: SwiftLint 0.63.2
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install SwiftLint
+        # The prebuilt Linux binary needs the GLIBC on ubuntu-24.04+.
+        run: |
+          curl -sL https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_amd64.zip -o swiftlint.zip
+          unzip -o swiftlint.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/swiftlint
+      - name: SwiftLint
+        run: swiftlint lint --quiet

@@ -1,4 +1,5 @@
 // swift-tools-version: 6.3
+import CompilerPluginSupport
 import PackageDescription
 
 // WireHummingbird — a Wire adapter for Hummingbird. It collates
@@ -17,11 +18,21 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/tachyonics/swift-wire.git", branch: "main"),
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
+        .package(url: "https://github.com/swiftlang/swift-syntax", "603.0.0"..<"604.0.0"),
     ],
     targets: [
+        .macro(
+            name: "WireHummingbirdMacros",
+            dependencies: [
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+            ]
+        ),
         .target(
             name: "WireHummingbird",
             dependencies: [
+                "WireHummingbirdMacros",
                 .product(name: "Wire", package: "swift-wire"),
                 .product(name: "Hummingbird", package: "hummingbird"),
             ]
@@ -35,6 +46,13 @@ let package = Package(
                 .product(name: "HummingbirdTesting", package: "hummingbird"),
             ],
             plugins: [.plugin(name: "WireBuildPlugin", package: "swift-wire")]
+        ),
+        .testTarget(
+            name: "WireHummingbirdMacrosTests",
+            dependencies: [
+                "WireHummingbirdMacros",
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+            ]
         ),
     ]
 )

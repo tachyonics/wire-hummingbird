@@ -13,19 +13,12 @@ controller's routing is a generic method, so the app's request context binds at
 ```swift
 @Singleton
 @Contributes(to: HummingbirdKeys.routes)
+@HummingbirdRoute("hello")   // generates the RouteContributor conformance, mounting under /hello
 struct HelloController {
     @Inject init(greeter: Greeter) { self.greeter = greeter }
-    // Your natural routing, relative to whatever group it's handed.
+    // Your natural routing, relative to the group @HummingbirdRoute hands it.
     func addRoutes(to router: some RouterMethods<some RequestContext>) {
         router.get(":name") { _, ctx in greeter.greeting(ctx.parameters.get("name") ?? "world") }
-    }
-}
-
-// The conformance the `@HummingbirdRoute("hello")` macro will generate for you —
-// it owns the mount and delegates to `addRoutes`:
-extension HelloController: RouteContributor {
-    func addWireRoutes<Context: RequestContext>(to router: some RouterMethods<Context>) {
-        addRoutes(to: router.group("hello"))
     }
 }
 
@@ -35,9 +28,12 @@ WireHummingbird.apply(graph, to: router)                 // applies collated rou
 let app = Application(router: router)
 ```
 
-Status: **M2 slice, step one** — the context-free `RouteContributor` surface with a
-hand-written conformance. The `@HummingbirdRoute("path")` macro that generates the
-conformance is step two. Controllers that need typed request-scoped state (auth via
+`@HummingbirdRoute("path")` owns the mount (`router.group("path")`); with no argument
+it mounts at the router root. It generates the `RouteContributor` conformance
+(`addWireRoutes`); your `addRoutes` is untouched.
+
+Status: **M2 slice** — the context-free `RouteContributor` surface with the
+`@HummingbirdRoute` macro. Controllers that need typed request-scoped state (auth via
 `context.identity`) belong in WireMVC, not here.
 
 Depends on pushed `swift-wire` main. Run the end-to-end example:

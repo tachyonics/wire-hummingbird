@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        swift-version: ["6.3.1"]
+        swift-version: ["6.3.3"]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        swift-version: ["6.3.1"]
+        swift-version: ["6.3.3"]
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
@@ -61,7 +61,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: SwiftyLab/setup-swift@v1
         with:
-          swift-version: "6.3.1"
+          swift-version: "6.3.3"
       - name: Install dependencies (Linux)
         if: startsWith(matrix.os, 'ubuntu')
         run: sudo apt-get update && sudo apt-get install -y libssl-dev
@@ -75,7 +75,7 @@ jobs:
     name: swift-format / Swift ${{ matrix.swift-version }}
     strategy:
       matrix:
-        swift-version: ["6.3"]
+        swift-version: ["6.3.3"]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -88,3 +88,17 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --exit-code
+
+  SwiftLint:
+    name: SwiftLint 0.63.2
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install SwiftLint
+        # The prebuilt Linux binary needs the GLIBC on ubuntu-24.04+.
+        run: |
+          curl -sL https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_amd64.zip -o swiftlint.zip
+          unzip -o swiftlint.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/swiftlint
+      - name: SwiftLint
+        run: swiftlint lint --quiet

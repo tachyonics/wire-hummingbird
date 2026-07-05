@@ -1,7 +1,7 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-/// `@HummingbirdRoute("path")` generates a `RouteContributor` conformance whose
+/// `@HummingbirdRoute("path")` generates a `HummingbirdRouteContributor` conformance whose
 /// `addWireRoutes` witness owns the mount — `router.group("path")` — and delegates
 /// to the controller's hand-written `addRoutes`. With no argument it mounts at the
 /// router root (`addRoutes(to: router)`).
@@ -23,7 +23,7 @@ public struct HummingbirdRouteMacro: ExtensionMacro {
 
         let conformance: DeclSyntax =
             """
-            extension \(type.trimmed): RouteContributor {
+            extension \(type.trimmed): HummingbirdRouteContributor {
                 func addWireRoutes<Context: RequestContext>(to router: some RouterMethods<Context>) {
                     addRoutes(to: \(raw: target))
                 }

@@ -16,7 +16,7 @@ final class HummingbirdRouteMacroTests: XCTestCase {
             expandedSource: """
                 struct TodoController {}
 
-                extension TodoController: RouteContributor {
+                extension TodoController: HummingbirdRouteContributor {
                     func addWireRoutes<Context: RequestContext>(to router: some RouterMethods<Context>) {
                         addRoutes(to: router.group("todos"))
                     }
@@ -35,7 +35,7 @@ final class HummingbirdRouteMacroTests: XCTestCase {
             expandedSource: """
                 struct RootController {}
 
-                extension RootController: RouteContributor {
+                extension RootController: HummingbirdRouteContributor {
                     func addWireRoutes<Context: RequestContext>(to router: some RouterMethods<Context>) {
                         addRoutes(to: router)
                     }

@@ -11,11 +11,10 @@ struct Greeter {
 
 // A controller in its natural shape (as in hummingbird-examples): `@Inject`ed app
 // deps, and a hand-written `addRoutes` that adds routes relative to whatever group
-// it's handed. `@Singleton` makes it a binding; `@Contributes` fans it into the
-// routes key; `@HummingbirdRoute("hello")` generates the `RouteContributor`
-// conformance, mounting the routes under `/hello`.
+// it's handed. `@Singleton` makes it a binding; `@HummingbirdRoute("hello")` both
+// fans it into the routes key (it aliases `@Contributes(to: HummingbirdKeys.routes)`)
+// and generates the `HummingbirdRouteContributor` conformance mounted under `/hello`.
 @Singleton
-@Contributes(to: HummingbirdKeys.routes)
 @HummingbirdRoute("hello")
 struct HelloController {
     private let greeter: Greeter

@@ -20,6 +20,6 @@ try await app.test(.router) { client in
     }
     precondition(body == "Hello, Ada!", "hello route failed: \(body)")
     print(
-        "wire-hummingbird OK — @Singleton @Contributes controller (injected Greeter) served via Wire.bootstrap() + WireHummingbird.apply"
+        "wire-hummingbird OK — @Singleton @HummingbirdRoute controller (injected Greeter) served via Wire.bootstrap() + WireHummingbird.apply"
     )
 }

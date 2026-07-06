@@ -18,6 +18,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/tachyonics/swift-wire.git", branch: "main"),
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
+        .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "603.0.0"..<"604.0.0"),
     ],
     targets: [
@@ -35,6 +36,7 @@ let package = Package(
                 "WireHummingbirdMacros",
                 .product(name: "Wire", package: "swift-wire"),
                 .product(name: "Hummingbird", package: "hummingbird"),
+                .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
             ]
         ),
         .executableTarget(
@@ -44,6 +46,7 @@ let package = Package(
                 .product(name: "Wire", package: "swift-wire"),
                 .product(name: "Hummingbird", package: "hummingbird"),
                 .product(name: "HummingbirdTesting", package: "hummingbird"),
+                .product(name: "ServiceLifecycle", package: "swift-service-lifecycle"),
             ],
             plugins: [.plugin(name: "WireBuildPlugin", package: "swift-wire")]
         ),

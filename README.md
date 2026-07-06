@@ -23,8 +23,8 @@ struct HelloController {
 
 let graph = try await Wire.bootstrap()
 let router = Router(context: BasicRequestContext.self)   // the app picks its context
-WireHummingbird.apply(graph, to: router)                 // applies collated routes
-let app = Application(router: router)
+let services = WireHummingbird.apply(graph, to: router)  // applies routes, returns services
+let app = Application(router: router, services: services)
 ```
 
 `@HummingbirdRoute("path")` does two things: it **aliases `@Contributes(to:
@@ -33,9 +33,17 @@ needs), and it generates the `HummingbirdRouteContributor` conformance — ownin
 mount (`router.group("path")`; no argument mounts at the root) and delegating to your
 untouched `addRoutes`.
 
-Status: **M2 slice** — the context-free `HummingbirdRouteContributor` surface with the
-`@HummingbirdRoute` macro. Controllers that need typed request-scoped state (auth via
-`context.identity`) belong in WireMVC, not here.
+**Services.** A binding that `@Contributes(to: HummingbirdKeys.services)` and
+conforms to `ServiceLifecycle.Service` (a DB client, a connection pool) is collated
+into the `[any Service]` `apply` returns, ready for `Application(services:)`. `any
+Service` is context-free, so it collates the way routes do.
+
+**Middleware is out of scope** — it's a context-typed value with no clean collation
+shape; the app owns the `Router` and calls `router.addMiddleware { … }` itself.
+
+Status: **M2 slice** — the context-free routes surface (`@HummingbirdRoute`) plus
+service-lifecycle collation. Controllers that need typed request-scoped state (auth
+via `context.identity`) belong in WireMVC, not here.
 
 Depends on pushed `swift-wire` main. Run the end-to-end example:
 

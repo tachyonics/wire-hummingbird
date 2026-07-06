@@ -1,4 +1,5 @@
 import Hummingbird
+import ServiceLifecycle
 import Wire
 
 // WireHummingbird — app-scoped route collation, context-free. `@HummingbirdRoute`
@@ -18,23 +19,29 @@ public protocol HummingbirdRouteContributor {
     func addWireRoutes<Context: RequestContext>(to router: some RouterMethods<Context>)
 }
 
-/// The collation key `@HummingbirdRoute` aliases into. `public`, so the
-/// no-consumer check stays silent — the graph conformance consumes it invisibly to
-/// the plugin, and an app could consume it externally — no `allowUnused` needed.
+/// The collation keys. `public`, so the no-consumer check stays silent — the graph
+/// conformance consumes each invisibly to the plugin, and an app could consume them
+/// externally — no `allowUnused` needed.
 public enum HummingbirdKeys {
+    /// Routes `@HummingbirdRoute` aliases into.
     public static let routes = CollectedKey<any HummingbirdRouteContributor>()
+    /// App-scoped `ServiceLifecycle` services (a DB client, a connection pool) a
+    /// binding `@Contributes` to run alongside the server. Context-free — `any
+    /// Service` carries no request context — so it collates the way routes do.
+    public static let services = CollectedKey<any Service>()
 }
 
 /// The surface the facade consumes — the generated graph conforms to this.
 public protocol HummingbirdComposable {
     var routes: [any HummingbirdRouteContributor] { get }
+    var services: [any Service] { get }
 }
 
-/// Tells Wire to emit `extension _WireGraph: HummingbirdComposable`, mapping
-/// `routes` to the routes `CollectedKey`'s product.
+/// Tells Wire to emit `extension _WireGraph: HummingbirdComposable`, mapping each
+/// member to its `CollectedKey`'s product.
 public let wireHummingbirdConformance = WireGraphConformanceV1(
     conformsTo: (any HummingbirdComposable).self,
-    members: [.init("routes", from: HummingbirdKeys.routes)]
+    members: [.init("routes", from: HummingbirdKeys.routes), .init("services", from: HummingbirdKeys.services)]
 )
 
 /// Tells Wire that `@HummingbirdRoute` aliases `@Contributes(to: HummingbirdKeys.routes)`,
@@ -46,14 +53,19 @@ public let wireHummingbirdRouteAlias = WireAdapterAnnotationV1(
 )
 
 public enum WireHummingbird {
-    /// Apply the graph's collated route contributors to a user-owned router. The
-    /// router's context binds each contributor's generic witness here.
+    /// Apply the graph's collated route contributors to a user-owned router (the
+    /// router's context binds each contributor's generic witness here) and return
+    /// the graph's collated `ServiceLifecycle` services to hand to
+    /// `Application(services:)`. Once `@Teardown` emission lands (M4), a
+    /// graph-teardown `Service` prepends here so it shuts down last.
+    @discardableResult
     public static func apply<Context: RequestContext>(
         _ graph: some HummingbirdComposable,
         to router: some RouterMethods<Context>
-    ) {
+    ) -> [any Service] {
         for contributor in graph.routes {
             contributor.addWireRoutes(to: router)
         }
+        return graph.services
     }
 }

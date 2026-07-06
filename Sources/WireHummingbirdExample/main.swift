@@ -1,10 +1,15 @@
-import Foundation
 import Hummingbird
 import HummingbirdTesting
 import Logging
 import ServiceLifecycle
 import Wire
 import WireHummingbird
+
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
 // End-to-end: build the app-scoped graph, apply its collated routes to a
 // user-owned router (which stays *outside* the graph), and get back the collated

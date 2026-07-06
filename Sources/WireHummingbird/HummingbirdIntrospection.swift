@@ -1,6 +1,11 @@
-import Foundation
 import Hummingbird
 import Wire
+
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
 // The introspection feature: a mountable endpoint serving the graph's WiringModel as
 // JSON. The app computes `graph.introspect()` in its own module and mounts this where

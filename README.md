@@ -42,9 +42,15 @@ conformance and aliases `@Contributes(to: HummingbirdKeys.services)` — you jus
 **Middleware is out of scope** — it's a context-typed value with no clean collation
 shape; the app owns the `Router` and calls `router.addMiddleware { … }` itself.
 
-Status: **M2 slice** — the context-free routes surface (`@HummingbirdRoute`) plus
-service-lifecycle collation. Controllers that need typed request-scoped state (auth
-via `context.identity`) belong in WireMVC, not here.
+**Introspection.** `WireHummingbird.mountIntrospection(graph.introspect(), on: router.group("admin"))`
+mounts a GET endpoint serving the graph's `WiringModel` (bindings, kinds, scopes,
+dependency edges, source locations) as JSON. It sits at the group's root, so mount it
+on a group you control — behind your own auth — since it exposes the DI graph.
+
+Status: **M2 slice** — the context-free routes surface (`@HummingbirdRoute`),
+service-lifecycle collation (`@HummingbirdService`), and a mountable introspection
+endpoint. Controllers that need typed request-scoped state (auth via
+`context.identity`) belong in WireMVC, not here.
 
 Depends on pushed `swift-wire` main. Run the end-to-end example:
 

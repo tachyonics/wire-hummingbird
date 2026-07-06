@@ -2,7 +2,14 @@ import Hummingbird
 import HummingbirdTesting
 import Logging
 import ServiceLifecycle
+import Wire
 import WireHummingbird
+
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
 // End-to-end: build the app-scoped graph, apply its collated routes to a
 // user-owned router (which stays *outside* the graph), and get back the collated
@@ -14,13 +21,39 @@ let graph = try await Wire.bootstrap()
 let router = Router(context: BasicRequestContext.self)
 let services = WireHummingbird.apply(graph, to: router)
 
-// Route slice (M2.2/M2.3): the @HummingbirdRoute controller serves in-process.
+// Introspection endpoint (M2.7): the app computes `graph.introspect()` and mounts it
+// on a group it controls — here "wiring"; in production, behind auth — serving the
+// framework-agnostic wiring model as JSON.
+WireHummingbird.mountIntrospection(graph.introspect(), on: router.group("wiring"))
+
+// Route slice (M2.2/M2.3) + introspection (M2.7): served in-process.
 let app = Application(router: router)
 try await app.test(.router) { client in
     let body = try await client.execute(uri: "/hello/Ada", method: .get) { response in
         String(buffer: response.body)
     }
     precondition(body == "Hello, Ada!", "hello route failed: \(body)")
+
+    let wiring = try await client.execute(uri: "/wiring", method: .get) { response in
+        precondition(response.status == .ok, "wiring status \(response.status)")
+        return try JSONDecoder().decode(WiringModel.self, from: Data(response.body.readableBytesView))
+    }
+    precondition(
+        wiring.bindings.contains { $0.type == "Greeter" && $0.kind == .singleton },
+        "wiring missing Greeter singleton"
+    )
+    precondition(
+        wiring.bindings.contains { $0.type == "HelloController" },
+        "wiring missing HelloController"
+    )
+    precondition(
+        wiring.bindings.contains { $0.kind == .aggregate },
+        "wiring missing a collated aggregate (routes/services)"
+    )
+    precondition(
+        wiring.bindings.allSatisfy { !$0.location.module.isEmpty },
+        "wiring binding missing source location"
+    )
 }
 
 // Service lifecycle (M2.5): the @HummingbirdService HeartbeatService is collated
@@ -48,5 +81,5 @@ precondition(graph.heartbeatService.stopped.withLock { $0 }, "service never shut
 
 print(
     "wire-hummingbird OK — @HummingbirdRoute controller served + @HummingbirdService "
-        + "collated into apply() and run through its ServiceLifecycle start/stop"
+        + "collated + /wiring introspection endpoint served the WiringModel as JSON"
 )

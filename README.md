@@ -33,10 +33,11 @@ needs), and it generates the `HummingbirdRouteContributor` conformance — ownin
 mount (`router.group("path")`; no argument mounts at the root) and delegating to your
 untouched `addRoutes`.
 
-**Services.** A binding that `@Contributes(to: HummingbirdKeys.services)` and
-conforms to `ServiceLifecycle.Service` (a DB client, a connection pool) is collated
-into the `[any Service]` `apply` returns, ready for `Application(services:)`. `any
-Service` is context-free, so it collates the way routes do.
+**Services.** A `@Singleton @HummingbirdService` binding (a DB client, a connection
+pool) is collated into the `[any Service]` `apply` returns, ready for
+`Application(services:)`. `@HummingbirdService` adds the `ServiceLifecycle.Service`
+conformance and aliases `@Contributes(to: HummingbirdKeys.services)` — you just write
+`run()`. `any Service` is context-free, so it collates the way routes do.
 
 **Middleware is out of scope** — it's a context-typed value with no clean collation
 shape; the app owns the `Router` and calls `router.addMiddleware { … }` itself.

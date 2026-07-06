@@ -52,6 +52,14 @@ public let wireHummingbirdRouteAlias = WireAdapterAnnotationV1(
     contributesTo: HummingbirdKeys.routes
 )
 
+/// Tells Wire that `@HummingbirdService` aliases `@Contributes(to: HummingbirdKeys.services)`,
+/// so a service needs only `@Singleton @HummingbirdService` — the plugin collates it
+/// without a separate `@Contributes`.
+public let wireHummingbirdServiceAlias = WireAdapterAnnotationV1(
+    annotation: "HummingbirdService",
+    contributesTo: HummingbirdKeys.services
+)
+
 public enum WireHummingbird {
     /// Apply the graph's collated route contributors to a user-owned router (the
     /// router's context binds each contributor's generic witness here) and return

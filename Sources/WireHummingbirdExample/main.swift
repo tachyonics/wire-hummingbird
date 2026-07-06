@@ -23,8 +23,8 @@ try await app.test(.router) { client in
     precondition(body == "Hello, Ada!", "hello route failed: \(body)")
 }
 
-// Service lifecycle (M2.5): the @Contributes(to: services) HeartbeatService is
-// collated into `apply`'s return, so an app hands it to `Application(services:)`.
+// Service lifecycle (M2.5): the @HummingbirdService HeartbeatService is collated
+// into `apply`'s return, so an app hands it to `Application(services:)`.
 // Run the collated services in a group and trigger graceful shutdown once started —
 // proving the collation delivers a real, runnable service that starts and stops.
 precondition(services.count == 1, "expected 1 collated service, got \(services.count)")
@@ -47,6 +47,6 @@ precondition(graph.heartbeatService.started.withLock { $0 }, "service never star
 precondition(graph.heartbeatService.stopped.withLock { $0 }, "service never shut down")
 
 print(
-    "wire-hummingbird OK — @HummingbirdRoute controller served + @Contributes service "
+    "wire-hummingbird OK — @HummingbirdRoute controller served + @HummingbirdService "
         + "collated into apply() and run through its ServiceLifecycle start/stop"
 )

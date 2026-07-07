@@ -3,7 +3,7 @@ import ServiceLifecycle
 import Wire
 
 // WireHummingbird — app-scoped collation for Hummingbird. Controllers
-// (`@HummingbirdRoute`) and services (`@HummingbirdService`) contribute into collation
+// (`@HummingbirdController`) and services (`@HummingbirdService`) contribute into collation
 // keys; Wire emits a `HummingbirdComposable` conformance on the generated graph
 // (knowing nothing about HTTP); `apply` applies the collated routes to a user-owned
 // router that stays *outside* the graph and returns the collated services.

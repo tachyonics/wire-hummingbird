@@ -80,6 +80,6 @@ precondition(graph.heartbeatService.started.withLock { $0 }, "service never star
 precondition(graph.heartbeatService.stopped.withLock { $0 }, "service never shut down")
 
 print(
-    "wire-hummingbird OK — @HummingbirdRoute controller served + @HummingbirdService "
+    "wire-hummingbird OK — @HummingbirdController controller served + @HummingbirdService "
         + "collated + /wiring introspection endpoint served the WiringModel as JSON"
 )

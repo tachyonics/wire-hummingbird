@@ -3,5 +3,5 @@ import SwiftSyntaxMacros
 
 @main
 struct WireHummingbirdMacrosPlugin: CompilerPlugin {
-    let providingMacros: [any Macro.Type] = [HummingbirdRouteMacro.self, HummingbirdServiceMacro.self]
+    let providingMacros: [any Macro.Type] = [HummingbirdControllerMacro.self, HummingbirdServiceMacro.self]
 }

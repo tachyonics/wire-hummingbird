@@ -17,7 +17,7 @@ extension HummingbirdKeys {
 /// Marks a binding as a `ServiceLifecycle.Service` collated into the graph's services.
 /// Adds the `Service` conformance if absent (the type still writes its own `run()`), and
 /// aliases `@Contributes(to: HummingbirdKeys.services)` — so `@Singleton
-/// @HummingbirdService` is all a service needs. Parallels `@HummingbirdRoute`.
+/// @HummingbirdService` is all a service needs. Parallels `@HummingbirdController`.
 @attached(extension, conformances: Service)
 public macro HummingbirdService() =
     #externalMacro(module: "WireHummingbirdMacros", type: "HummingbirdServiceMacro")

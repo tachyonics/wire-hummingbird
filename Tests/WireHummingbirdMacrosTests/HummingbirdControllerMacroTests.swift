@@ -4,13 +4,13 @@ import XCTest
 
 @testable import WireHummingbirdMacros
 
-final class HummingbirdRouteMacroTests: XCTestCase {
-    private let macros: [String: any Macro.Type] = ["HummingbirdRoute": HummingbirdRouteMacro.self]
+final class HummingbirdControllerMacroTests: XCTestCase {
+    private let macros: [String: any Macro.Type] = ["HummingbirdController": HummingbirdControllerMacro.self]
 
     func testGroupMount() {
         assertMacroExpansion(
             """
-            @HummingbirdRoute("todos")
+            @HummingbirdController("todos")
             struct TodoController {}
             """,
             expandedSource: """
@@ -29,7 +29,7 @@ final class HummingbirdRouteMacroTests: XCTestCase {
     func testRootMount() {
         assertMacroExpansion(
             """
-            @HummingbirdRoute
+            @HummingbirdController
             struct RootController {}
             """,
             expandedSource: """
@@ -38,6 +38,25 @@ final class HummingbirdRouteMacroTests: XCTestCase {
                 extension RootController: HummingbirdRouteContributor {
                     func addWireRoutes<Context: RequestContext>(to router: some RouterMethods<Context>) {
                         addRoutes(to: router)
+                    }
+                }
+                """,
+            macros: macros
+        )
+    }
+
+    func testPackageAccessWitness() {
+        assertMacroExpansion(
+            """
+            @HummingbirdController("todos")
+            package struct TodoController {}
+            """,
+            expandedSource: """
+                package struct TodoController {}
+
+                extension TodoController: HummingbirdRouteContributor {
+                    package func addWireRoutes<Context: RequestContext>(to router: some RouterMethods<Context>) {
+                        addRoutes(to: router.group("todos"))
                     }
                 }
                 """,

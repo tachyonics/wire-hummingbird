@@ -3,7 +3,7 @@
 A [swift-wire](https://github.com/tachyonics/swift-wire) adapter for
 [Hummingbird](https://github.com/hummingbird-project/hummingbird).
 
-Controllers are ordinary Wire bindings that `@HummingbirdRoute` fans into a routes
+Controllers are ordinary Wire bindings that `@HummingbirdController` fans into a routes
 key; Wire emits a `HummingbirdComposable` conformance on the generated graph (knowing
 nothing about HTTP), and `WireHummingbird.apply` applies the collated routes to a
 `Router` that stays **outside** the graph. The collation surface is **context-free** —
@@ -12,10 +12,10 @@ a controller's routing is a generic method, so the app's request context binds a
 
 ```swift
 @Singleton
-@HummingbirdRoute("hello")   // aliases @Contributes(to: HummingbirdKeys.routes) + mounts under /hello
+@HummingbirdController("hello")   // aliases @Contributes(to: HummingbirdKeys.routes) + mounts under /hello
 struct HelloController {
     @Inject init(greeter: Greeter) { self.greeter = greeter }
-    // Your natural routing, relative to the group @HummingbirdRoute hands it.
+    // Your natural routing, relative to the group @HummingbirdController hands it.
     func addRoutes(to router: some RouterMethods<some RequestContext>) {
         router.get(":name") { _, ctx in greeter.greeting(ctx.parameters.get("name") ?? "world") }
     }
@@ -27,8 +27,8 @@ let services = WireHummingbird.apply(graph, to: router)  // applies routes, retu
 let app = Application(router: router, services: services)
 ```
 
-`@HummingbirdRoute("path")` does two things: it **aliases `@Contributes(to:
-HummingbirdKeys.routes)`** (so `@Singleton @HummingbirdRoute` is all a controller
+`@HummingbirdController("path")` does two things: it **aliases `@Contributes(to:
+HummingbirdKeys.routes)`** (so `@Singleton @HummingbirdController` is all a controller
 needs), and it generates the `HummingbirdRouteContributor` conformance — owning the
 mount (`router.group("path")`; no argument mounts at the root) and delegating to your
 untouched `addRoutes`.
@@ -47,7 +47,7 @@ mounts a GET endpoint serving the graph's `WiringModel` (bindings, kinds, scopes
 dependency edges, source locations) as JSON. It sits at the group's root, so mount it
 on a group you control — behind your own auth — since it exposes the DI graph.
 
-Status: **M2 slice** — the context-free routes surface (`@HummingbirdRoute`),
+Status: **M2 slice** — the context-free routes surface (`@HummingbirdController`),
 service-lifecycle collation (`@HummingbirdService`), and a mountable introspection
 endpoint. Controllers that need typed request-scoped state (auth via
 `context.identity`) belong in WireMVC, not here.

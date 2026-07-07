@@ -24,7 +24,7 @@ let services = WireHummingbird.apply(graph, to: router)
 // Introspection endpoint (M2.7): the app computes `graph.introspect()` and mounts it
 // on a group it controls — here "wiring"; in production, behind auth — serving the
 // framework-agnostic wiring model as JSON.
-WireHummingbird.mountIntrospection(graph.introspect(), on: router.group("wiring"))
+WireHummingbird.mountIntrospection(graph, on: router.group("wiring"))
 
 // Route slice (M2.2/M2.3) + introspection (M2.7): served in-process.
 let app = Application(router: router)

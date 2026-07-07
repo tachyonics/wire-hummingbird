@@ -30,4 +30,15 @@ extension WireHummingbird {
             )
         }
     }
+
+    /// Mount a GET endpoint serving `graph`'s wiring model — the graph form of the
+    /// above, so the same `graph` handed to `WireOpenAPI.apply` / `WireHummingbird.apply`
+    /// mounts here too. Serves the *whole* model; to expose a filtered or redacted view,
+    /// call the `WiringModel` overload with `graph.introspect()` transformed.
+    public static func mountIntrospection<Context: RequestContext>(
+        _ graph: some Introspectable,
+        on router: some RouterMethods<Context>
+    ) {
+        mountIntrospection(graph.introspect(), on: router)
+    }
 }

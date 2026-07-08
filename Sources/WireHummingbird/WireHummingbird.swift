@@ -39,8 +39,10 @@ public enum WireHummingbird {
     /// Apply the graph's collated route contributors to a user-owned router (the
     /// router's context binds each contributor's generic witness here) and return
     /// the graph's collated `ServiceLifecycle` services to hand to
-    /// `Application(services:)`. Once `@Teardown` emission lands (M4), a
-    /// graph-teardown `Service` prepends here so it shuts down last.
+    /// `Application(services:)`. Teardown is separate — prepend
+    /// `WireHummingbird.teardownService(graph, logger:)` to the service list so the
+    /// graph's `@Teardown` actions run at shutdown (it's a graph concern, not tied to
+    /// this or any adapter's `apply`).
     @discardableResult
     public static func apply<Context: RequestContext>(
         _ graph: some HummingbirdComposable,

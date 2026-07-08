@@ -62,10 +62,16 @@ try await app.test(.router) { client in
 // proving the collation delivers a real, runnable service that starts and stops.
 precondition(services.count == 1, "expected 1 collated service, got \(services.count)")
 
+// Teardown (M4): the graph's `@Teardown` actions run at shutdown via a service prepended
+// to the list so it shuts down *last* — after every other service has stopped. `graph`
+// feeds it as `some Teardownable` (the plugin-generated conformance).
+let logger = Logger(label: "wire-hummingbird-example")
+let allServices: [any Service] = [WireHummingbird.teardownService(graph, logger: logger)] + services
+
 let serviceGroup = ServiceGroup(
     configuration: .init(
-        services: services.map { .init(service: $0) },
-        logger: Logger(label: "wire-hummingbird-example")
+        services: allServices.map { .init(service: $0) },
+        logger: logger
     )
 )
 try await withThrowingTaskGroup(of: Void.self) { group in
@@ -79,7 +85,17 @@ try await withThrowingTaskGroup(of: Void.self) { group in
 precondition(graph.heartbeatService.started.withLock { $0 }, "service never started")
 precondition(graph.heartbeatService.stopped.withLock { $0 }, "service never shut down")
 
+// The graph's teardown ran, and it ran *after* the service stopped (prepended → last).
+let events = eventLog.withLock { $0 }
+let serviceStopped = events.firstIndex(of: "service-stopped")
+let resourceTorn = events.firstIndex(of: "resource-torn")
+precondition(resourceTorn != nil, "graph teardown never ran")
+precondition(
+    serviceStopped != nil && serviceStopped! < resourceTorn!,
+    "teardown ran before the service stopped: \(events)"
+)
+
 print(
     "wire-hummingbird OK — @HummingbirdController controller served + @HummingbirdService "
-        + "collated + /wiring introspection endpoint served the WiringModel as JSON"
+        + "collated + /wiring introspection + @Teardown ran at shutdown, after the service stopped"
 )
